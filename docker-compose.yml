@@ -4,39 +4,56 @@ services:
     image: zookeeper
     ports:
       - 2181:2181
+      
   ch1:
     build:
       context: .
-      dockerfile: Dockerfile.ch1
+      dockerfile: Dockerfile.ch
     ports:
       - 8811:8123
       - 9011:9000
     volumes:
-      - "/home/nsonich/clh_cluster/ch1_volume:/var/lib/clickhouse"
+      - "/Users/zeeshan/Desktop/clickhouse-cluster/ch1_volume:/var/lib/clickhouse"
+      - "/Users/zeeshan/Desktop/clickhouse-logs/ch1_logs:/var/log/clickhouse-server"
+      - "/Users/zeeshan/Desktop/clickhouse-cluster/ch1_volume/tmp:/var/lib/clickhouse/tmp/"
+    depends_on:
+      - "zookeeper"
   ch2:
     build:
       context: .
-      dockerfile: Dockerfile.ch2
+      dockerfile: Dockerfile.ch
     ports:
       - 8812:8123
       - 9012:9000
     volumes:
-      - "/home/nsonich/clh_cluster/ch2_volume:/var/lib/clickhouse"
+      - "/Users/zeeshan/Desktop/clickhouse-cluster/ch2_volume:/var/lib/clickhouse"
+      - "/Users/zeeshan/Desktop/clickhouse-cluster/ch2_volume/tmp:/var/lib/clickhouse/tmp/"
+      - "/Users/zeeshan/Desktop/clickhouse-logs/ch2_logs:/var/log/clickhouse-server"
+    depends_on:
+      - "zookeeper"
   ch3:
     build:
       context: .
-      dockerfile: Dockerfile.ch3
+      dockerfile: Dockerfile.ch
     ports:
       - 8813:8123
       - 9013:9000
     volumes:
-      - "/home/nsonich/clh_cluster/ch3_volume:/var/lib/clickhouse"
+      - "/Users/zeeshan/Desktop/clickhouse-cluster/ch3_volume:/var/lib/clickhouse"
+      - "/Users/zeeshan/Desktop/clickhouse-cluster/ch3_volume/tmp:/var/lib/clickhouse/tmp/"
+      - "/Users/zeeshan/Desktop/clickhouse-logs/ch3_logs:/var/log/clickhouse-server"
+    depends_on:
+      - "zookeeper"
   ch4:
     build:
       context: .
-      dockerfile: Dockerfile.ch4
+      dockerfile: Dockerfile.ch
     ports:
       - 8814:8123
       - 9014:9000
     volumes:
-      - "/home/nsonich/clh_cluster/ch4_volume:/var/lib/clickhouse"
+      - "/Users/zeeshan/Desktop/clickhouse-cluster/ch4_volume:/var/lib/clickhouse"
+      - "/Users/zeeshan/Desktop/clickhouse-cluster/ch4_volume/tmp:/var/lib/clickhouse/tmp/"
+      - "/Users/zeeshan/Desktop/clickhouse-logs/ch4_logs:/var/log/clickhouse-server"
+    depends_on:
+      - "zookeeper"

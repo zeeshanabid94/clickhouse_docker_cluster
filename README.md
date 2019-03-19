@@ -1,22 +1,48 @@
 # Clickhouse cluster on Docker
 
-Конфигурация кластера: 2 шарда с двумя репликами в каждом шарде (см. include_from.xml)
-Каждая нода пишет свои данные в директорию `ch*_volume`
+You need to create a `ch*_volume` directory in the root git repo when you clone it.
+These folders will be volumes for the clickhouse instances.
+Since there are four nodes, we will need four volumes (folders) in the root repo.
+```
+    # Make data dirs
+    mkdir -p ch1_volume
+    mkdir -p ch2_volume
+    mkdir -p ch3_volume
+    mkdir -p ch4_volume
 
-Запуск кластера
+    # Make log dirs
+    mkdir -p ch1_logs
+    mkdir -p ch2_logs
+    mkdir -p ch3_logs
+    mkdir -p ch4_logs
+```
 
+You will also have to change the paths of the volumes to absolute paths in your own
+machine in docker-compose.yml
+```
+volumes:
+      - "path/to/ch1_volume:/var/lib/clickhouse"
+      - "path/to/ch1_logs:/var/log/clickhouse-server"
+      - "path/to/ch1_volume/tmp:/var/lib/clickhouse/tmp/"
+```
+
+To start the docker cluster:
+```
     docker-compose up
+```
 
-Подключится к ноде `ch1`
-
+Connect to the host `ch1`
+```
     clickhouse-client --host=127.0.0.1 --port=9011
-    
-Создать тестовую БД `test_db` на каждой ноде
+```
 
+Then you can create a database with the following SQL command:
+```
     create database test_db
-    
-На одной из нод создать реплицируемую таблицу (таблица создается на всех шардах и репликах)
+``` 
 
+Sample create table
+```
     CREATE TABLE IF NOT EXISTS test_db.events_shard ON CLUSTER test_cluster (
       event_date           Date DEFAULT toDate(now()),
       company_id           UInt32,
@@ -27,17 +53,21 @@
         (company_id),
         8192
     );
-    
-Создать Distributed таблицу для записи/чтения данных
-  
+```
+
+Sample distributed table
+```
     CREATE TABLE IF NOT EXISTS test_db.events_dist
     ON CLUSTER test_cluster AS test_db.events_shard
     ENGINE = Distributed(test_cluster, test_db, events_shard, rand());
+``` 
 
-Запись в distributed таблицу
-
+Insert into the database.
+```
     INSERT INTO test_db.events_dist (company_id, product_id) VALUES (1, 11), (1, 12), (1, 13);
+```
 
-Чтение из distributed таблицы
-
+Select from the database.
+```
     SELECT * FROM test_db.events_dist;
+```

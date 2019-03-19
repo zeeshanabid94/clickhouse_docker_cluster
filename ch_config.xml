@@ -95,7 +95,7 @@
     <tmp_path>/var/lib/clickhouse/tmp/</tmp_path>
 
     <!-- Path to configuration file with users, access rights, profiles of settings, quotas. -->
-    <users_config>users.xml</users_config>
+    <!-- <users_config>users.xml</users_config> -->
 
     <!-- Default profile of settings.. -->
     <default_profile>default</default_profile>
@@ -127,7 +127,8 @@
       -->
     <include_from>/etc/clickhouse-server/include_from.xml</include_from>
     <remote_servers incl="clickhouse_remote_servers" />
-        <!-- If element has 'incl' attribute, then for it's value will be used corresponding substitution from another file.
+
+    <!-- If element has 'incl' attribute, then for it's value will be used corresponding substitution from another file.
          By default, path to file with substitutions is /etc/metrika.xml. It could be changed in config in 'include_from' element.
          Values for substitutions are specified in /yandex/name_of_substitution elements in that file.
       -->
@@ -138,16 +139,16 @@
          See https://clickhouse.yandex/reference_en.html#Data%20replication
       -->
     <zookeeper incl="zookeeper-servers" optional="true" />
-        <!-- Substitutions for parameters of replicated tables.
+    <!-- Substitutions for parameters of replicated tables.
           Optional. If you don't use replicated tables, you could omit that.
 
          See https://clickhouse.yandex/reference_en.html#Creating%20replicated%20tables
       -->
     <!-- <macros incl="macros" optional="true" /> -->
-    <macros>
-        <shard>02</shard>
-        <replica>ch4</replica>
-    </macros>
+    <!-- <macros>
+        <shard>01</shard>
+        <replica>ch1</replica>
+    </macros> -->
 
 
     <!-- Reloading interval for embedded dictionaries, in seconds. Default: 3600. -->
@@ -308,4 +309,104 @@
             </retention>
         </default>
     </graphite_rollup_example>
+
+        <!-- Profiles of settings. -->
+    <profiles>
+        <!-- Default settings. -->
+        <default>
+            <!-- Maximum memory usage for processing single query, in bytes. -->
+            <max_memory_usage>10000000000</max_memory_usage>
+
+            <!-- Use cache of uncompressed blocks of data. Meaningful only for processing many of very short queries. -->
+            <use_uncompressed_cache>0</use_uncompressed_cache>
+
+            <!-- How to choose between replicas during distributed query processing.
+                 random - choose random replica from set of replicas with minimum number of errors
+                 nearest_hostname - from set of replicas with minimum number of errors, choose replica
+                  with minimum number of different symbols between replica's hostname and local hostname
+                  (Hamming distance).
+                 in_order - first live replica is chosen in specified order.
+            -->
+            <load_balancing>random</load_balancing>
+        </default>
+
+        <!-- Profile that allows only read queries. -->
+        <readonly>
+            
+        </readonly>
+    </profiles>
+
+    <!-- Users and ACL. -->
+    <users>
+        <!-- If user name was not specified, 'default' user is used. -->
+        <default>
+            <!-- Password could be specified in plaintext or in SHA256 (in hex format).
+                 If you want to specify password in plaintext (not recommended), place it in 'password' element.
+                 Example: <password>qwerty</password>.
+                 Password could be empty.
+                 If you want to specify SHA256, place it in 'password_sha256_hex' element.
+                 Example: <password_sha256_hex>65e84be33532fb784c48129675f9eff3a682b27168c0ea744b2cf58ee02337c5</password_sha256_hex>
+                 How to generate decent password:
+                 Execute: PASSWORD=$(base64 < /dev/urandom | head -c8); echo "$PASSWORD"; echo -n "$PASSWORD" | sha256sum | tr -d '-'
+                 In first line will be password and in second - corresponding SHA256.
+            -->
+            <password>default</password>
+
+            <!-- List of networks with open access.
+                 To open access from everywhere, specify:
+                    <ip>::/0</ip>
+                 To open access only from localhost, specify:
+                    <ip>::1</ip>
+                    <ip>127.0.0.1</ip>
+                 Each element of list has one of the following forms:
+                 <ip> IP-address or network mask. Examples: 213.180.204.3 or 10.0.0.1/8 or 10.0.0.1/255.255.255.0
+                     2a02:6b8::3 or 2a02:6b8::3/64 or 2a02:6b8::3/ffff:ffff:ffff:ffff::.
+                 <host> Hostname. Example: server01.yandex.ru.
+                     To check access, DNS query is performed, and all received addresses compared to peer address.
+                 <host_regexp> Regular expression for host names. Example, ^server\d\d-\d\d-\d\.yandex\.ru$
+                     To check access, DNS PTR query is performed for peer address and then regexp is applied.
+                     Then, for result of PTR query, another DNS query is performed and all received addresses compared to peer address.
+                     Strongly recommended that regexp is ends with $
+                 All results of DNS requests are cached till server restart.
+            -->
+            <networks incl="networks" replace="replace">
+                <ip>::/0</ip>
+            </networks>
+
+            <!-- Settings profile for user. -->
+            <profile>default</profile>
+
+            <!-- Quota for user. -->
+            <quota>default</quota>
+        </default>
+
+        <!-- Example of user with readonly access. -->
+        <readonly>
+            <password>readonly</password>
+            <networks incl="networks" replace="replace">
+                <ip>::/0</ip>
+            </networks>
+            <profile>readonly</profile>
+            <quota>default</quota>
+        </readonly>
+    </users>
+
+    <!-- Quotas. -->
+    <quotas>
+        <!-- Name of quota. -->
+        <default>
+            <!-- Limits for time interval. You could specify many intervals with different limits. -->
+            <interval>
+                <!-- Length of interval. -->
+                <duration>3600</duration>
+
+                <!-- No limits. Just calculate resource usage for time interval. -->
+                <queries>0</queries>
+                <errors>0</errors>
+                <result_rows>0</result_rows>
+                <read_rows>0</read_rows>
+                <execution_time>0</execution_time>
+            </interval>
+        </default>
+    </quotas>
 </yandex>
